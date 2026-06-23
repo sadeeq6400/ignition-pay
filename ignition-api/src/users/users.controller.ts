@@ -2,21 +2,35 @@ import {
   Controller,
   Get,
   Patch,
+  Post,
   Param,
   Body,
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateKYCStatusDto } from './dto/update-kyc-status.dto';
 import { UserProfileDto, PublicUserProfileDto } from './dto/user-profile.dto';
+import { LoginDto, LoginResponseDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AdminGuard } from './guards/admin.guard';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  /**
+   * POST /users/login
+   * Authenticate with email + password, returns access and refresh tokens.
+   * Rate-limited to 10 requests per minute per IP.
+   */
+  @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
+    return this.usersService.login(dto.email, dto.password);
+  }
 
   /**
    * GET /users/me

@@ -2,14 +2,23 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProfileDto, PublicUserProfileDto } from './dto/user-profile.dto';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
+import { LoginResponseDto } from './dto/login.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly config: ConfigService,
+  ) {}
 
   /**
    * Get authenticated user's full profile
@@ -197,6 +206,81 @@ export class UsersService {
       success: true,
       message: `User KYC status updated to ${status}`,
     };
+  }
+
+  /**
+   * Login with email + password, returning JWT access and refresh tokens.
+   * Enforces account lockout after too many failed attempts.
+   */
+  async login(email: string, password: string): Promise<LoginResponseDto> {
+    const maxAttempts = this.config.get<number>('LOGIN_MAX_ATTEMPTS', 5);
+    const lockoutSeconds = this.config.get<number>(
+      'LOGIN_LOCKOUT_SECONDS',
+      900,
+    );
+
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Check lockout
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const retryAfter = Math.ceil(
+        (user.lockedUntil.getTime() - Date.now()) / 1000,
+      );
+      throw new UnauthorizedException(
+        `Account locked. Try again in ${retryAfter}s`,
+      );
+    }
+
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+
+    if (!valid) {
+      const attempts = user.loginAttempts + 1;
+      const lockedUntil =
+        attempts >= maxAttempts
+          ? new Date(Date.now() + lockoutSeconds * 1000)
+          : null;
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { loginAttempts: attempts, lockedUntil },
+      });
+
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Reset attempts on success
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { loginAttempts: 0, lockedUntil: null },
+    });
+
+    const payload = { sub: user.id, email: user.email, role: user.role };
+
+    const accessToken = this.jwt.sign(payload, {
+      secret: this.config.get<string>('JWT_SECRET', 'default-secret'),
+      expiresIn: '15m',
+    });
+
+    const refreshToken = this.jwt.sign(
+      { sub: user.id },
+      {
+        secret: this.config.get<string>(
+          'REFRESH_TOKEN_SECRET',
+          'default-refresh-secret',
+        ),
+        expiresIn: '7d',
+      },
+    );
+
+    return { accessToken, refreshToken, tokenType: 'Bearer' };
   }
 
   /**
