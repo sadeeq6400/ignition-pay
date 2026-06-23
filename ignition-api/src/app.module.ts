@@ -11,6 +11,7 @@ import { AppThrottlerModule } from './throttler/throttler.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
 import { CampaignsModule } from './campaigns/campaigns.module';
 import { UsersModule } from './users/users.module';
+import { WalletsModule } from './wallets/wallets.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UsersModule } from './users/users.module';
     ApiKeysModule,
     CampaignsModule,
     UsersModule,
+    WalletsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
