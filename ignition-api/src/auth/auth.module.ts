@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../prisma/prisma.module';
+import { SessionModule } from '../session/session.module';
 import { AuthChallengeController } from './auth-challenge.controller';
 import { AuthVerifyController } from './auth-verify.controller';
+import { AuthLogoutController } from './auth-logout.controller';
 
 @Module({
   imports: [
@@ -16,8 +18,9 @@ import { AuthVerifyController } from './auth-verify.controller';
       }),
     }),
     PrismaModule,
+    SessionModule,
   ],
-  controllers: [AuthChallengeController, AuthVerifyController],
+  controllers: [AuthChallengeController, AuthVerifyController, AuthLogoutController],
   exports: [JwtModule],
 })
 export class AuthModule {}

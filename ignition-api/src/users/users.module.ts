@@ -6,11 +6,13 @@ import { UsersController, AdminUsersController } from './users.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AdminGuard } from './guards/admin.guard';
+import { SessionModule } from '../session/session.module';
 
 @Module({
   imports: [
     PrismaModule,
     ConfigModule,
+    SessionModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
