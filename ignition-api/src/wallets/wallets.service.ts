@@ -1,8 +1,10 @@
-import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, Inject, NotFoundException } from '@nestjs/common';
 import StellarSdk, { StrKey } from '@stellar/stellar-sdk';
 import { ConfigService } from '@nestjs/config';
 import Keyv from 'keyv';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateWalletDto, WalletNetwork } from './dto/create-wallet.dto';
 
 @Injectable()
 export class WalletsService {
@@ -11,10 +13,66 @@ export class WalletsService {
   constructor(
     private readonly config: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Keyv,
+    private readonly prisma: PrismaService,
   ) {
     this.horizonUrl =
       this.config.get<string>('STELLAR_HORIZON_URL') ??
       'https://horizon-testnet.stellar.org';
+  }
+
+  /**
+   * Create a new wallet for a user, assigning a deposit address and configuring limits.
+   */
+  async createWallet(userId: string, dto: CreateWalletDto) {
+    // Verify user exists
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const network = dto.network ?? WalletNetwork.STELLAR;
+
+    // Determine deposit address
+    let depositAddress = dto.depositAddress;
+    if (!depositAddress) {
+      // Auto-generate a Stellar keypair deposit address
+      const keypair = StellarSdk.Keypair.random();
+      depositAddress = keypair.publicKey();
+    }
+
+    // Validate Stellar addresses
+    if (network === WalletNetwork.STELLAR && !StrKey.isValidEd25519PublicKey(depositAddress)) {
+      throw new BadRequestException('Invalid Stellar deposit address');
+    }
+
+    // Ensure deposit address is not already in use
+    const existing = await this.prisma.wallet.findUnique({ where: { depositAddress } });
+    if (existing) {
+      throw new ConflictException('Deposit address already assigned to another wallet');
+    }
+
+    const wallet = await this.prisma.wallet.create({
+      data: {
+        userId,
+        network,
+        depositAddress,
+        label: dto.label ?? null,
+        dailyLimit: dto.dailyLimit ?? 1000,
+        monthlyLimit: dto.monthlyLimit ?? 10000,
+      },
+    });
+
+    return {
+      id: wallet.id,
+      userId: wallet.userId,
+      network: wallet.network,
+      depositAddress: wallet.depositAddress,
+      label: wallet.label,
+      dailyLimit: Number(wallet.dailyLimit),
+      monthlyLimit: Number(wallet.monthlyLimit),
+      isActive: wallet.isActive,
+      createdAt: wallet.createdAt,
+    };
   }
 
   /**

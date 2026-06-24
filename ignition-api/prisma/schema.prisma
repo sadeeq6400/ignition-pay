@@ -78,6 +78,12 @@ enum AuditActionType {
   ADMIN_ACTION
 }
 
+enum WalletNetwork {
+  STELLAR
+  ETHEREUM
+  BITCOIN
+}
+
 enum KYCStatus {
   PENDING
   VERIFIED
@@ -119,6 +125,7 @@ model User {
   auditLogs     AuditLog[]
   apiKeys       ApiKey[]
   passwordHistory PasswordHistory[]
+  wallets       Wallet[]
 
   @@index([email])
   @@index([role])
@@ -344,4 +351,26 @@ model AuditLog {
   @@index([resourceType])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+/// Wallet model representing a user's custodial wallet with deposit address and limits
+model Wallet {
+  id              String        @id @default(uuid())
+  userId          String
+  network         WalletNetwork @default(STELLAR)
+  depositAddress  String        @unique
+  label           String?
+  dailyLimit      Decimal       @default(1000) @db.Decimal(20, 7)
+  monthlyLimit    Decimal       @default(10000) @db.Decimal(20, 7)
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([depositAddress])
+  @@index([network])
+  @@map("wallets")
 }

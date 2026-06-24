@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { WalletsController } from './wallets.controller';
-import { WalletsService } from './wallets.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
+import { TransactionsController } from './transactions.controller';
+import { TransactionsService } from './transactions.service';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
       }),
     }),
   ],
-  controllers: [WalletsController],
-  providers: [WalletsService, JwtAuthGuard],
+  controllers: [TransactionsController],
+  providers: [TransactionsService, JwtAuthGuard],
 })
-export class WalletsModule {}
+export class TransactionsModule {}
