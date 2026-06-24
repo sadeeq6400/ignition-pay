@@ -15,6 +15,11 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateKYCStatusDto } from './dto/update-kyc-status.dto';
 import { UserProfileDto, PublicUserProfileDto } from './dto/user-profile.dto';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
+import {
+  ChangePasswordDto,
+  PasswordActionResponseDto,
+  SetupPasswordDto,
+} from './dto/password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AdminGuard } from './guards/admin.guard';
 
@@ -31,6 +36,41 @@ export class UsersController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
     return this.usersService.login(dto.email, dto.password);
+  }
+
+  /**
+   * POST /users/password/setup
+   * Set the first password for an authenticated wallet-created account.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('password/setup')
+  async setupPassword(
+    @Request() req: any,
+    @Body() dto: SetupPasswordDto,
+  ): Promise<PasswordActionResponseDto> {
+    return this.usersService.setupPassword({
+      userId: req.user.sub,
+      walletAddress: req.user.walletAddress,
+      password: dto.password,
+    });
+  }
+
+  /**
+   * PATCH /users/password
+   * Change the authenticated user's password after confirming the current one.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Patch('password')
+  async changePassword(
+    @Request() req: any,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<PasswordActionResponseDto> {
+    return this.usersService.changePassword({
+      userId: req.user.sub,
+      walletAddress: req.user.walletAddress,
+      currentPassword: dto.currentPassword,
+      newPassword: dto.newPassword,
+    });
   }
 
   /**
