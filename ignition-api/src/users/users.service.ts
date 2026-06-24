@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { LoginResponseDto } from './dto/login.dto';
-import { UserRole } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 import { RegisterResponseDto } from './dto/register-response.dto';
 
 import { randomBytes, createHash } from 'crypto';
@@ -111,7 +111,7 @@ export class UsersService {
         email: updateDto.email ?? user.email,
         name: updateDto.name ?? user.name,
         phone: updateDto.phone ?? user.phone,
-        preferences: parsedPreferences,
+        preferences: parsedPreferences as Prisma.InputJsonValue,
         displayName: updateDto.displayName ?? user.displayName,
         bio: updateDto.bio ?? user.bio,
         avatarUrl: updateDto.avatarUrl ?? user.avatarUrl,
@@ -123,7 +123,9 @@ export class UsersService {
         },
         donations: true,
       },
-    });
+    }) as Prisma.UserGetPayload<{
+      include: { campaigns: true; donations: true };
+    }>;
 
     const totalRaised = updated.campaigns.reduce(
       (sum, campaign) => sum + parseFloat(campaign.raisedAmount.toString()),

@@ -126,7 +126,8 @@ model User {
   newsLetterSub Newsletter?
   auditLogs     AuditLog[]
   apiKeys       ApiKey[]
-  wallets       Wallet[]
+  wallets                Wallet[]
+  emailVerificationTokens EmailVerificationToken[]
 
   @@index([email])
   @@index([role])
@@ -370,10 +371,36 @@ model Wallet {
   updatedAt       DateTime      @updatedAt
 
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses Address[]
 
   @@index([userId])
   @@index([depositAddress])
   @@index([network])
   @@map("wallets")
+}
+
+/// Address model for deposit address management with allocation tracking
+model Address {
+  id             String        @id @default(uuid())
+  walletId       String?
+  address        String        @unique
+  network        WalletNetwork @default(STELLAR)
+  label          String?
+  isActive       Boolean       @default(true)
+  allocatedAt    DateTime?
+  lastActivityAt DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  wallet Wallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+
+  @@index([walletId])
+  @@index([address])
+  @@index([network])
+  @@index([isActive])
+  @@index([allocatedAt])
+  @@index([lastActivityAt])
+  @@map("addresses")
 }

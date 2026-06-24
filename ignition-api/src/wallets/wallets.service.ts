@@ -32,13 +32,8 @@ export class WalletsService {
 
     const network = dto.network ?? WalletNetwork.STELLAR;
 
-    // Determine deposit address
-    let depositAddress = dto.depositAddress;
-    if (!depositAddress) {
-      // Auto-generate a Stellar keypair deposit address
-      const keypair = StellarSdk.Keypair.random();
-      depositAddress = keypair.publicKey();
-    }
+    // Determine deposit address (auto-generate if not provided)
+    const depositAddress = dto.depositAddress ?? StellarSdk.Keypair.random().publicKey();
 
     // Validate Stellar addresses
     if (network === WalletNetwork.STELLAR && !StrKey.isValidEd25519PublicKey(depositAddress)) {

@@ -13,6 +13,7 @@ import { CampaignsModule } from './campaigns/campaigns.module';
 import { UsersModule } from './users/users.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { AddressesModule } from './addresses/addresses.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     UsersModule,
     WalletsModule,
     TransactionsModule,
+    AddressesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
