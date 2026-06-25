@@ -91,6 +91,12 @@ enum KYCStatus {
   REJECTED
 }
 
+enum AddressStatus {
+  AVAILABLE
+  ALLOCATED
+  RETIRED
+}
+
 // ---------------------------------------------------------------------------
 // MODELS: Define all database models with relationships and constraints
 // ---------------------------------------------------------------------------
@@ -385,10 +391,32 @@ model Wallet {
   updatedAt       DateTime      @updatedAt
 
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  depositAddresses DepositAddress[]
 
   @@index([userId])
   @@index([depositAddress])
   @@index([network])
   @@map("wallets")
+}
+
+/// DepositAddress model for tracking generated deposit addresses associated with wallets
+model DepositAddress {
+  id          String        @id @default(uuid())
+  address     String        @unique
+  walletId    String
+  network     WalletNetwork @default(STELLAR)
+  status      AddressStatus @default(ALLOCATED)
+  label       String?
+  allocatedAt DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([status])
+  @@index([network])
+  @@map("deposit_addresses")
 }
