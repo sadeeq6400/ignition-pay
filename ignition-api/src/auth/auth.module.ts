@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthChallengeController } from './auth-challenge.controller';
 import { AuthVerifyController } from './auth-verify.controller';
+import { JwtMiddleware } from './jwt.middleware';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AuthVerifyController } from './auth-verify.controller';
     PrismaModule,
   ],
   controllers: [AuthChallengeController, AuthVerifyController],
-  exports: [JwtModule],
+  providers: [JwtMiddleware],
+  exports: [JwtModule, JwtMiddleware],
 })
 export class AuthModule {}

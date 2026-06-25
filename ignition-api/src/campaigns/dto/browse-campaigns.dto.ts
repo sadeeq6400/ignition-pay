@@ -1,5 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsOptional, IsNumber, Min, Max, IsString, IsIn } from 'class-validator';
+import {
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  IsString,
+  IsIn,
+} from 'class-validator';
 
 export class BrowseCampaignsQueryDto {
   @IsOptional()

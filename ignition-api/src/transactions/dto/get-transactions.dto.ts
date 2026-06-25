@@ -1,5 +1,13 @@
 import { Type } from 'class-transformer';
-import { IsOptional, IsNumber, Min, Max, IsString, IsIn, IsDateString } from 'class-validator';
+import {
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  IsString,
+  IsIn,
+  IsDateString,
+} from 'class-validator';
 
 export class GetTransactionsQueryDto {
   @IsOptional()

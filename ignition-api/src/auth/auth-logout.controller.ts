@@ -28,8 +28,14 @@ export class AuthLogoutController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Logout and invalidate refresh token' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Token successfully invalidated' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid token' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Token successfully invalidated',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid token',
+  })
   async logout(@Req() req: Request): Promise<void> {
     const user = req['user'];
 

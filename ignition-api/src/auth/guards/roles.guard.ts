@@ -17,10 +17,10 @@ export class RolesGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
@@ -54,7 +54,9 @@ export class RolesGuard implements CanActivate {
 
     const hasRole = requiredRoles.includes(dbUser.role);
     if (!hasRole) {
-      throw new ForbiddenException('Forbidden resource: insufficient permissions');
+      throw new ForbiddenException(
+        'Forbidden resource: insufficient permissions',
+      );
     }
 
     return true;

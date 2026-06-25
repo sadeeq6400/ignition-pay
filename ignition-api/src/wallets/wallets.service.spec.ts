@@ -1,16 +1,25 @@
 import { ConfigService } from '@nestjs/config';
 import Keyv from 'keyv';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 
 jest.mock('@stellar/stellar-sdk', () => {
-  const validPublicKey = 'GABCDEFGHIJKLMNOPQRSTUVWXYZ123456789ABCDEFGHIJKLMNOPQRS';
+  const validPublicKey =
+    'GABCDEFGHIJKLMNOPQRSTUVWXYZ123456789ABCDEFGHIJKLMNOPQRS';
   return {
     __esModule: true,
     default: {
       Server: jest.fn().mockImplementation(() => ({
         accounts() {
           return {
-            accountId: () => ({ call: async () => ({ balances: [{ asset_type: 'native', balance: '100.0' }] }) }),
+            accountId: () => ({
+              call: async () => ({
+                balances: [{ asset_type: 'native', balance: '100.0' }],
+              }),
+            }),
           };
         },
         payments() {
@@ -19,7 +28,17 @@ jest.mock('@stellar/stellar-sdk', () => {
               order: () => ({
                 limit: () => ({
                   call: async () => ({
-                    records: [{ id: '1', type: 'payment', from: 'A', to: 'B', amount: '50', asset_type: 'native', created_at: new Date().toISOString() }],
+                    records: [
+                      {
+                        id: '1',
+                        type: 'payment',
+                        from: 'A',
+                        to: 'B',
+                        amount: '50',
+                        asset_type: 'native',
+                        created_at: new Date().toISOString(),
+                      },
+                    ],
                   }),
                 }),
               }),
@@ -53,12 +72,20 @@ const mockWallet = {
   updatedAt: new Date(),
 };
 
-const buildMockPrisma = (overrides: Partial<{ user: any; wallet: any }> = {}) => ({
+const buildMockPrisma = (
+  overrides: Partial<{ user: any; wallet: any }> = {},
+) => ({
   user: {
-    findUnique: jest.fn().mockResolvedValue('user' in overrides ? overrides.user : { id: 'user-uuid' }),
+    findUnique: jest
+      .fn()
+      .mockResolvedValue(
+        'user' in overrides ? overrides.user : { id: 'user-uuid' },
+      ),
   },
   wallet: {
-    findUnique: jest.fn().mockResolvedValue('wallet' in overrides ? overrides.wallet : null),
+    findUnique: jest
+      .fn()
+      .mockResolvedValue('wallet' in overrides ? overrides.wallet : null),
     create: jest.fn().mockResolvedValue(mockWallet),
   },
 });
@@ -93,7 +120,8 @@ describe('WalletsService', () => {
 
     it('creates a wallet with a provided valid deposit address', async () => {
       const result = await service.createWallet('user-uuid', {
-        depositAddress: 'GABCDEFGHIJKLMNOPQRSTUVWXYZ123456789ABCDEFGHIJKLMNOPQRS',
+        depositAddress:
+          'GABCDEFGHIJKLMNOPQRSTUVWXYZ123456789ABCDEFGHIJKLMNOPQRS',
         label: 'My Wallet',
         dailyLimit: 500,
         monthlyLimit: 5000,
@@ -114,12 +142,16 @@ describe('WalletsService', () => {
       const noPrisma = buildMockPrisma({ user: null });
       // @ts-ignore
       service = new WalletsService(new ConfigService(), cache, noPrisma);
-      await expect(service.createWallet('bad-user', {})).rejects.toThrow(NotFoundException);
+      await expect(service.createWallet('bad-user', {})).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws BadRequestException for invalid Stellar deposit address', async () => {
       await expect(
-        service.createWallet('user-uuid', { depositAddress: 'invalid-address' }),
+        service.createWallet('user-uuid', {
+          depositAddress: 'invalid-address',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -129,7 +161,8 @@ describe('WalletsService', () => {
       service = new WalletsService(new ConfigService(), cache, conflictPrisma);
       await expect(
         service.createWallet('user-uuid', {
-          depositAddress: 'GABCDEFGHIJKLMNOPQRSTUVWXYZ123456789ABCDEFGHIJKLMNOPQRS',
+          depositAddress:
+            'GABCDEFGHIJKLMNOPQRSTUVWXYZ123456789ABCDEFGHIJKLMNOPQRS',
         }),
       ).rejects.toThrow(ConflictException);
     });

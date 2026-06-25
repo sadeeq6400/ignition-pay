@@ -20,24 +20,35 @@ export class CreateWalletDto {
   @IsOptional()
   network?: WalletNetwork = WalletNetwork.STELLAR;
 
-  @ApiPropertyOptional({ description: 'Deposit address to assign to this wallet' })
+  @ApiPropertyOptional({
+    description: 'Deposit address to assign to this wallet',
+  })
   @IsString()
   @IsOptional()
   depositAddress?: string;
 
-  @ApiPropertyOptional({ description: 'Human-readable label for the wallet', maxLength: 100 })
+  @ApiPropertyOptional({
+    description: 'Human-readable label for the wallet',
+    maxLength: 100,
+  })
   @IsString()
   @IsOptional()
   @MaxLength(100)
   label?: string;
 
-  @ApiPropertyOptional({ description: 'Daily transaction limit', default: 1000 })
+  @ApiPropertyOptional({
+    description: 'Daily transaction limit',
+    default: 1000,
+  })
   @IsNumber()
   @IsPositive()
   @IsOptional()
   dailyLimit?: number;
 
-  @ApiPropertyOptional({ description: 'Monthly transaction limit', default: 10000 })
+  @ApiPropertyOptional({
+    description: 'Monthly transaction limit',
+    default: 10000,
+  })
   @IsNumber()
   @IsPositive()
   @IsOptional()

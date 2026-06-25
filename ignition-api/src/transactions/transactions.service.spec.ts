@@ -51,7 +51,9 @@ describe('TransactionsService', () => {
   it('applies status filter', async () => {
     await service.getTransactions({ page: 1, limit: 10, status: 'PENDING' });
     expect(prisma.donation.count).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ status: 'PENDING' }) }),
+      expect.objectContaining({
+        where: expect.objectContaining({ status: 'PENDING' }),
+      }),
     );
   });
 
@@ -71,7 +73,9 @@ describe('TransactionsService', () => {
     await service.getTransactions({ page: 1, limit: 10, type: 'USDC' });
     expect(prisma.donation.count).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ assetCode: { equals: 'USDC', mode: 'insensitive' } }),
+        where: expect.objectContaining({
+          assetCode: { equals: 'USDC', mode: 'insensitive' },
+        }),
       }),
     );
   });

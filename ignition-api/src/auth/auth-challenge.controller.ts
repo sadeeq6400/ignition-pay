@@ -14,7 +14,11 @@ interface ChallengeResponse {
 export class AuthChallengeController {
   @Get('challenge')
   @ApiOperation({ summary: 'Get authentication challenge for wallet address' })
-  @ApiQuery({ name: 'walletAddress', required: true, example: 'G...wallet-address' })
+  @ApiQuery({
+    name: 'walletAddress',
+    required: true,
+    example: 'G...wallet-address',
+  })
   @ApiResponse({ status: 200, description: 'Returns challenge string' })
   @ApiResponse({ status: 400, description: 'Invalid Stellar wallet address' })
   getChallenge(

@@ -5,4 +5,3 @@ export class ConfirmEmailDto {
   @MinLength(16)
   token!: string;
 }
-

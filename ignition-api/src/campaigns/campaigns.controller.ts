@@ -17,14 +17,12 @@ import { Request } from 'express';
 import { CampaignsService } from './campaigns.service';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
-import { BrowseCampaignsQueryDto, BrowseCampaignsResponseDto } from './dto/browse-campaigns.dto';
+import {
+  BrowseCampaignsQueryDto,
+  BrowseCampaignsResponseDto,
+} from './dto/browse-campaigns.dto';
 
-const FORBIDDEN_FIELDS = [
-  'goalAmount',
-  'contractId',
-  'milestones',
-  'endDate',
-];
+const FORBIDDEN_FIELDS = ['goalAmount', 'contractId', 'milestones', 'endDate'];
 
 @ApiTags('campaigns')
 @Controller('campaigns')
@@ -84,9 +82,8 @@ export class CampaignsController {
     const cacheKey = this.generateCacheKey(query);
 
     // Try to get from cache
-    const cached = await this.cacheManager.get<BrowseCampaignsResponseDto>(
-      cacheKey,
-    );
+    const cached =
+      await this.cacheManager.get<BrowseCampaignsResponseDto>(cacheKey);
     if (cached) {
       return cached;
     }

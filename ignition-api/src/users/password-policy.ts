@@ -50,10 +50,7 @@ function fragmentVariants(value?: string | null): string[] {
   }
 
   const normalized = normalize(value);
-  return [
-    normalized,
-    ...normalized.split(/[^a-z0-9]+/).filter(Boolean),
-  ];
+  return [normalized, ...normalized.split(/[^a-z0-9]+/).filter(Boolean)];
 }
 
 function normalize(value: string): string {
