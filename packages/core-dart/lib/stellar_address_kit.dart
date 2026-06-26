@@ -12,6 +12,8 @@ export 'src/routing/extract.dart';
 export 'src/routing/routing_result.dart';
 export 'src/routing/memo.dart';
 export 'src/muxed/muxed_address.dart';
+export 'src/crypto/keypair.dart';
+export 'src/crypto/crypto_utils.dart';
 export 'src/transaction/transaction.dart';
 export 'src/transaction/builder.dart';
 export 'src/exceptions.dart';
