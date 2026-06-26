@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CacheModule } from '@nestjs/cache-manager';
 import { UsersService } from './users.service';
 import { UsersController, AdminUsersController } from './users.controller';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -22,6 +23,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
         signOptions: { expiresIn: '15m' },
       }),
     }),
+    CacheModule,
   ],
   controllers: [UsersController, AdminUsersController],
   providers: [UsersService, JwtAuthGuard, AdminGuard, RolesGuard],

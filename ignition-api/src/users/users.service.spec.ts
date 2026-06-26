@@ -2,6 +2,7 @@ import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import Keyv from 'keyv';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './users.service';
 
@@ -9,6 +10,17 @@ jest.mock('bcryptjs', () => ({
   compare: jest.fn(),
   hash: jest.fn(),
 }));
+
+jest.mock('keyv', () => {
+  return {
+    __esModule: true,
+    default: jest.fn().mockImplementation(() => ({
+      get: jest.fn(),
+      set: jest.fn(),
+      delete: jest.fn(),
+    })),
+  };
+});
 
 const bcryptMock = bcrypt as jest.Mocked<typeof bcrypt>;
 
@@ -48,12 +60,14 @@ const baseUser = {
 describe('UsersService password security', () => {
   let prisma: PrismaMock;
   let service: UsersService;
+  let cache: Keyv;
 
   beforeEach(() => {
     prisma = {
       user: {
         findFirst: jest.fn(),
         update: jest.fn(),
+        findUnique: jest.fn(),
       },
       passwordHistory: {
         findMany: jest.fn<Promise<PasswordHistoryRecord[]>, []>(),
@@ -63,6 +77,12 @@ describe('UsersService password security', () => {
       $transaction: jest.fn((callback) => callback(prisma)),
     };
 
+    cache = {
+      get: jest.fn(),
+      set: jest.fn(),
+      delete: jest.fn(),
+    } as unknown as Keyv;
+
     bcryptMock.compare.mockReset();
     bcryptMock.hash.mockReset();
     bcryptMock.hash.mockResolvedValue('hash:new-password' as never);
@@ -71,6 +91,7 @@ describe('UsersService password security', () => {
       prisma as unknown as PrismaService,
       { sign: jest.fn() } as unknown as JwtService,
       new ConfigService({ PASSWORD_BCRYPT_ROUNDS: '12' }),
+      cache,
     );
   });
 
@@ -209,5 +230,64 @@ describe('UsersService password security', () => {
         id: { in: ['delete-1'] },
       },
     });
+  });
+});
+
+describe('UsersService login', () => {
+  let prisma: {
+    user: {
+      findUnique: jest.Mock;
+      update: jest.Mock;
+    };
+  };
+  let cache: { set: jest.Mock };
+  let service: UsersService;
+
+  beforeEach(() => {
+    prisma = {
+      user: {
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
+    };
+    cache = {
+      set: jest.fn(),
+    };
+
+    service = new UsersService(
+      prisma as unknown as PrismaService,
+      {
+        sign: jest.fn().mockReturnValue('signed-jwt-token'),
+      } as unknown as JwtService,
+      new ConfigService({
+        JWT_SECRET: 'test-secret',
+        REFRESH_TOKEN_SECRET: 'test-refresh-secret',
+      }),
+      cache as unknown as Keyv,
+    );
+  });
+
+  it('stores refresh token in Redis on successful login', async () => {
+    const mockUser = {
+      id: 'user-123',
+      walletAddress: 'GBKXNRTZQVD6CNOQNRZVMJVQ4ZQ5KABCDEF',
+      email: 'test@example.com',
+      passwordHash: 'hashed-password',
+      role: 'USER',
+      loginAttempts: 0,
+      lockedUntil: null,
+    };
+
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+    (prisma.user.update as jest.Mock).mockResolvedValue({});
+    bcryptMock.compare.mockResolvedValueOnce(true as never);
+
+    await service.login('test@example.com', 'password123');
+
+    expect(cache.set).toHaveBeenCalledWith(
+      `refresh:${mockUser.walletAddress}`,
+      expect.any(String),
+      7 * 24 * 60 * 60 * 1000,
+    );
   });
 });

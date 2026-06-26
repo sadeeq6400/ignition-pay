@@ -6,11 +6,14 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Prisma, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes, createHash } from 'crypto';
+import { Inject } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import Keyv from 'keyv';
 import { LoginResponseDto } from './dto/login.dto';
 import { Prisma, UserRole } from '@prisma/client';
 import { PasswordActionResponseDto } from './dto/password.dto';
@@ -56,6 +59,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    @Inject(CACHE_MANAGER) private readonly cache: Keyv,
     private readonly sessionService: SessionService,
   ) {}
 
@@ -383,6 +387,10 @@ export class UsersService {
         expiresIn: `${sessionTtlSeconds}s`,
       },
     );
+
+    const cacheKey = `refresh:${user.walletAddress}`;
+    const ttlMs = 7 * 24 * 60 * 60 * 1000;
+    await this.cache.set(cacheKey, refreshToken, ttlMs);
 
     return { accessToken, refreshToken, tokenType: 'Bearer' };
   }
