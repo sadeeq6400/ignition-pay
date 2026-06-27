@@ -20,12 +20,14 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { SessionModule } from './session/session.module';
 import { AddressesModule } from './addresses/addresses.module';
 import { ConfigValidationService } from './config/validation';
+import { CryptoModule } from './common/crypto/crypto.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    CryptoModule,
     PrismaModule,
     QueueModule,
     RedisModule,
