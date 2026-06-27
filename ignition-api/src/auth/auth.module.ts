@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
+import { PassportModule } from '@nestjs/passport';
 import { PrismaModule } from '../prisma/prisma.module';
 import { SessionModule } from '../session/session.module';
 import { AuthChallengeController } from './auth-challenge.controller';
@@ -10,9 +11,11 @@ import { AuthLogoutController } from './auth-logout.controller';
 import { AuthRefreshController } from './auth-refresh.controller';
 import { AuthTokenService } from './auth-token.service';
 import { JwtMiddleware } from './jwt.middleware';
+import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -23,6 +26,7 @@ import { JwtMiddleware } from './jwt.middleware';
     }),
     PrismaModule,
     CacheModule,
+    SessionModule,
   ],
   controllers: [
     AuthChallengeController,
@@ -30,12 +34,8 @@ import { JwtMiddleware } from './jwt.middleware';
     AuthLogoutController,
     AuthRefreshController,
   ],
-  providers: [AuthTokenService],
-  exports: [JwtModule, AuthTokenService],
-    SessionModule,
-  ],
-  controllers: [AuthChallengeController, AuthVerifyController, AuthLogoutController],
-  providers: [JwtMiddleware],
-  exports: [JwtModule, JwtMiddleware],
+  providers: [AuthTokenService, JwtMiddleware, JwtStrategy],
+  exports: [JwtModule, AuthTokenService, JwtMiddleware, JwtStrategy, PassportModule],
 })
 export class AuthModule {}
+
