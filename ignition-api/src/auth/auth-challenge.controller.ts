@@ -1,8 +1,8 @@
 import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
-import { randomBytes } from 'crypto';
 import { StrKey } from '@stellar/stellar-sdk';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { AuthChallengeService } from './auth-challenge.service';
 
 interface ChallengeResponse {
   challenge: string;
@@ -12,6 +12,8 @@ interface ChallengeResponse {
 @Controller('auth')
 @Throttle({ strict: { limit: 5, ttl: 60_000 } })
 export class AuthChallengeController {
+  constructor(private readonly challengeService: AuthChallengeService) {}
+
   @Get('challenge')
   @ApiOperation({ summary: 'Get authentication challenge for wallet address' })
   @ApiQuery({
@@ -21,16 +23,14 @@ export class AuthChallengeController {
   })
   @ApiResponse({ status: 200, description: 'Returns challenge string' })
   @ApiResponse({ status: 400, description: 'Invalid Stellar wallet address' })
-  getChallenge(
+  async getChallenge(
     @Query('walletAddress') walletAddress: string,
-  ): ChallengeResponse {
+  ): Promise<ChallengeResponse> {
     if (!walletAddress || !StrKey.isValidEd25519PublicKey(walletAddress)) {
       throw new BadRequestException('Invalid Stellar wallet address');
     }
 
-    const nonce = randomBytes(16).toString('hex');
-    const timestamp = Math.floor(Date.now() / 1000);
-    const challenge = `stellaraid:login:${nonce}:${timestamp}`;
+    const challenge = await this.challengeService.issueChallenge(walletAddress);
 
     return { challenge };
   }

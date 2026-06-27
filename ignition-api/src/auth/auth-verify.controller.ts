@@ -15,7 +15,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { PrismaService } from '../prisma/prisma.service';
 import { UserRole } from '@prisma/client';
+import { AuthChallengeService } from './auth-challenge.service';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { SessionService } from '../session/session.service';
@@ -59,14 +61,16 @@ export class AuthVerifyController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly sessionService: SessionService,
-    private readonly tokenService: AuthTokenService,
+    private readonly challengeService: AuthChallengeService,
   ) {}
 
   @Post('verify')
-  @ApiOperation({ summary: 'Verify Stellar signature and issue JWT pair' })
-  @ApiBody({ type: VerifyDto })
-  @ApiResponse({ status: 201, description: 'Successful login', type: AuthResponse })
+  @ApiOperation({ summary: 'Verify signature and issue JWT token' })
+  @ApiResponse({
+    status: 201,
+    description: 'Successful login',
+    type: AuthResponse,
+  })
   @ApiResponse({ status: 400, description: 'Invalid payload' })
   @ApiResponse({ status: 401, description: 'Signature verification failed' })
   async verify(@Body() dto: VerifyDto): Promise<AuthResponse> {
@@ -88,7 +92,9 @@ export class AuthVerifyController {
       throw new UnauthorizedException('Signature verification failed');
     }
 
-    // Issue #222: role from admin allowlist
+    await this.challengeService.consumeChallenge(walletAddress, challenge);
+
+    // Issue #222: resolve role from admin allowlist
     const adminWallets = this.config
       .get<string>('ADMIN_WALLETS', '')
       .split(',')

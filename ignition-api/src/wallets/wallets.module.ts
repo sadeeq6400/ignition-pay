@@ -14,7 +14,7 @@ import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET', 'default-secret'),
+        secret: config.get<string>('JWT_SECRET', 'stellaraid-default-secret'),
         signOptions: { expiresIn: '15m' },
       }),
     }),

@@ -369,7 +369,7 @@ export class UsersService {
         sid: session.sessionId,
       },
       {
-        secret: this.config.get<string>('JWT_SECRET', 'default-secret'),
+        secret: this.config.get<string>('JWT_SECRET', 'stellaraid-default-secret'),
         expiresIn: `${accessTtlSeconds}s`,
       },
     );
