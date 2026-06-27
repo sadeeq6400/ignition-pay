@@ -1,7 +1,7 @@
-import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
-import { StrKey } from '@stellar/stellar-sdk';
+import { Controller, Get, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ChallengeQueryDto } from './dto/challenge-query.dto';
 import { AuthChallengeService } from './auth-challenge.service';
 
 interface ChallengeResponse {
@@ -16,19 +16,12 @@ export class AuthChallengeController {
 
   @Get('challenge')
   @ApiOperation({ summary: 'Get authentication challenge for wallet address' })
-  @ApiQuery({
-    name: 'walletAddress',
-    required: true,
-    example: 'G...wallet-address',
-  })
   @ApiResponse({ status: 200, description: 'Returns challenge string' })
   @ApiResponse({ status: 400, description: 'Invalid Stellar wallet address' })
   async getChallenge(
-    @Query('walletAddress') walletAddress: string,
+    @Query() query: ChallengeQueryDto,
   ): Promise<ChallengeResponse> {
-    if (!walletAddress || !StrKey.isValidEd25519PublicKey(walletAddress)) {
-      throw new BadRequestException('Invalid Stellar wallet address');
-    }
+    const { walletAddress } = query;
 
     const challenge = await this.challengeService.issueChallenge(walletAddress);
 

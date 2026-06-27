@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
-import { Keypair, StrKey } from '@stellar/stellar-sdk';
+import { Keypair } from '@stellar/stellar-sdk';
 import {
   ApiBody,
   ApiOperation,
@@ -17,6 +17,8 @@ import {
 } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRole } from '@prisma/client';
+import { IsNotEmpty, IsString } from 'class-validator';
+import { IsStellarPublicKey } from '../common/decorators/is-stellar-public-key.decorator';
 import { AuthChallengeService } from './auth-challenge.service';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -26,12 +28,19 @@ import { LoginResponseDto } from '../users/dto/login.dto';
 
 export class VerifyDto {
   @ApiProperty({ example: 'G...wallet-address' })
+  @IsString()
+  @IsNotEmpty()
+  @IsStellarPublicKey()
   walletAddress: string;
 
   @ApiProperty({ example: 'signature-string' })
+  @IsString()
+  @IsNotEmpty()
   signedChallenge: string;
 
   @ApiProperty({ example: 'stellaraid:login:nonce:timestamp' })
+  @IsString()
+  @IsNotEmpty()
   challenge: string;
 }
 
@@ -75,13 +84,6 @@ export class AuthVerifyController {
   @ApiResponse({ status: 401, description: 'Signature verification failed' })
   async verify(@Body() dto: VerifyDto): Promise<AuthResponse> {
     const { walletAddress, signedChallenge, challenge } = dto;
-
-    if (!walletAddress || !StrKey.isValidEd25519PublicKey(walletAddress)) {
-      throw new BadRequestException('Invalid wallet address');
-    }
-    if (!signedChallenge || !challenge) {
-      throw new BadRequestException('Missing signedChallenge or challenge');
-    }
 
     const keypair = Keypair.fromPublicKey(walletAddress);
     const messageBytes = Buffer.from(challenge, 'utf8');
