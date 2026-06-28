@@ -2,6 +2,8 @@
 
 The Flutter mobile application for the Ignition Pay Stellar wallet ecosystem.
 
+> Note: This package currently expects native platform folders for Android and iOS to be present before mobile-specific tooling is added.
+
 ## Stack
 
 - **Framework**: Flutter 3.22+
