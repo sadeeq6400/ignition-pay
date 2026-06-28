@@ -1,0 +1,76 @@
+name: Continuous Integration & Code Coverage
+
+on:
+  push:
+    branches: [ main, v2 ]
+  pull_request:
+    branches: [ main, v2 ]
+
+jobs:
+  test-and-report:
+    name: Execute Tests & Generate Reports
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Source Code Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Runtime Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Rust & Tarpaulin Compiler (for Soroban Contracts)
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: llvm-tools-preview
+
+      - name: Install cargo-tarpaulin Utility
+        run: cargo install cargo-tarpaulin
+
+      - name: Install Application Project Dependencies
+        run: npm ci
+
+      # 1. Execute Backend Unit Matrix with Coverage
+      - name: Run Backend Core API Test Suite
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        run: npm run test:cov --prefix apps/api
+
+      # 2. Execute Frontend Component Matrix with Coverage
+      - name: Run Frontend Web Client Test Suite
+        run: npm run test:coverage --prefix apps/web
+
+      # 3. Execute Smart Contract Test Matrix with Tarpaulin
+      - name: Run Soroban Smart Contracts Coverage
+        run: |
+          cd contracts
+          cargo tarpaulin --out Lcov --output-dir ./coverage
+
+      # 4. Consolidate and Forward LCOV Files directly to Codecov
+      - name: Dispatch Diagnostics Reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./apps/api/coverage/lcov.info,./apps/web/coverage/lcov.info,./contracts/coverage/lcov.info
+          flags: unittests,smart-contracts
+          name: web3-student-lab-coverage
+          fail_ci_if_error: true
