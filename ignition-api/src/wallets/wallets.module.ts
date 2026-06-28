@@ -5,6 +5,8 @@ import { WalletsController } from './wallets.controller';
 import { WalletsService } from './wallets.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
+import { PermissionsService } from '../auth/permissions/permissions.service';
+import { PermissionsGuard } from '../auth/permissions/permissions.guard';
 
 @Module({
   imports: [
@@ -20,6 +22,6 @@ import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
     }),
   ],
   controllers: [WalletsController],
-  providers: [WalletsService, JwtAuthGuard],
+  providers: [WalletsService, JwtAuthGuard, PermissionsService, PermissionsGuard],
 })
 export class WalletsModule {}

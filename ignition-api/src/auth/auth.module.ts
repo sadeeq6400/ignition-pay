@@ -13,6 +13,8 @@ import { AuthTokenService } from './auth-token.service';
 import { AuthChallengeService } from './auth-challenge.service';
 import { JwtMiddleware } from './jwt.middleware';
 import { JwtStrategy } from './jwt.strategy';
+import { PermissionsService } from './permissions/permissions.service';
+import { PermissionsGuard } from './permissions/permissions.guard';
 
 @Module({
   imports: [
@@ -38,8 +40,8 @@ import { JwtStrategy } from './jwt.strategy';
     AuthLogoutController,
     AuthRefreshController,
   ],
-  providers: [AuthTokenService, JwtMiddleware, JwtStrategy,AuthChallengeService, JwtMiddleware],
-  exports: [JwtModule, AuthTokenService, JwtMiddleware, JwtStrategy, PassportModule],
+  providers: [AuthTokenService, JwtMiddleware, JwtStrategy, AuthChallengeService, JwtMiddleware, PermissionsService, PermissionsGuard],
+  exports: [JwtModule, AuthTokenService, JwtMiddleware, JwtStrategy, PassportModule, PermissionsService, PermissionsGuard],
 })
 export class AuthModule {}
 

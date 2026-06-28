@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
+import { PermissionsService } from '../auth/permissions/permissions.service';
+import { PermissionsGuard } from '../auth/permissions/permissions.guard';
 import { TransactionsController } from './transactions.controller';
 import { TransactionsService } from './transactions.service';
 
@@ -20,6 +22,6 @@ import { TransactionsService } from './transactions.service';
     }),
   ],
   controllers: [TransactionsController],
-  providers: [TransactionsService, JwtAuthGuard],
+  providers: [TransactionsService, JwtAuthGuard, PermissionsService, PermissionsGuard],
 })
 export class TransactionsModule {}

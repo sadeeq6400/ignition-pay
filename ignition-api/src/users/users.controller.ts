@@ -31,6 +31,10 @@ import { UserProfileDto, PublicUserProfileDto } from './dto/user-profile.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AdminGuard } from './guards/admin.guard';
+import { PermissionsService } from '../auth/permissions/permissions.service';
+import { PermissionsGuard } from '../auth/permissions/permissions.guard';
+import { RequirePermissions } from '../auth/permissions/require-permissions.decorator';
+import { Permission } from '../auth/permissions/permissions.map';
 
 interface AuthenticatedRequest {
   user: {
@@ -43,7 +47,10 @@ interface AuthenticatedRequest {
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly permissionsService: PermissionsService,
+  ) {}
 
   /**
    * POST /users/register
@@ -133,6 +140,16 @@ export class UsersController {
   }
 
   /**
+   * GET /users/me/permissions
+   * Returns the permission list for the authenticated user's role.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('me/permissions')
+  getMyPermissions(@Request() req: any): Permission[] {
+    return this.permissionsService.getUserPermissions(req.user.role);
+  }
+
+  /**
    * PATCH /users/me
    * Update authenticated user's profile
    */
@@ -188,8 +205,9 @@ export class AdminUsersController {
   /**
    * PATCH /admin/users/:id/kyc
    */
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard, PermissionsGuard)
   @Patch(':id/kyc')
+  @RequirePermissions(Permission.ADMIN_USERS_KYC)
   async updateKYCStatus(
     @Param('id') userId: string,
     @Body() updateDto: UpdateKYCStatusDto,
@@ -206,9 +224,10 @@ export class AdminUsersController {
    * PATCH /admin/users/:id/role
    * Update user's role (admin only)
    */
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles(UserRole.ADMIN)
   @Patch(':id/role')
+  @RequirePermissions(Permission.ADMIN_USERS_ROLE)
   async updateUserRole(
     @Param('id') userId: string,
     @Body() updateDto: UpdateUserRoleDto,

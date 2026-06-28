@@ -9,6 +9,8 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { SessionModule } from '../session/session.module';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { PermissionsService } from '../auth/permissions/permissions.service';
+import { PermissionsGuard } from '../auth/permissions/permissions.guard';
 
 @Module({
   imports: [
@@ -26,7 +28,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
     CacheModule,
   ],
   controllers: [UsersController, AdminUsersController],
-  providers: [UsersService, JwtAuthGuard, AdminGuard, RolesGuard],
+  providers: [UsersService, JwtAuthGuard, AdminGuard, RolesGuard, PermissionsService, PermissionsGuard],
   exports: [UsersService],
 })
 export class UsersModule {}
